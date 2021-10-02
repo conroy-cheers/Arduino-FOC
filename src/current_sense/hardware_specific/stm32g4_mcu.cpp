@@ -4,7 +4,7 @@
 #if defined(STM32G4xx) 
 #define _ADC_VOLTAGE 3.3
 #define _ADC_RESOLUTION 4096.0
-#define ADC_BUF_LEN_1 2
+#define ADC_BUF_LEN_1 4
 #define ADC_BUF_LEN_2 1
 
 static ADC_HandleTypeDef hadc1;
@@ -31,6 +31,10 @@ float _readADCVoltageInline(const int pin){
     raw_adc = adcBuffer2[0];
   else if(pin == PB1) // = ADC1_IN12 = phase W (OP3_OUT) on B-G431B-ESC1
     raw_adc = adcBuffer1[0];
+  else if (pin == PB14)  // = ADC1_IN5 = NTC thermistor on B-G431B-ESC1
+    {raw_adc = adcBuffer1[2]; return raw_adc;}
+  else if (pin == PA0)  // = ADC1_IN1 = VBUS sense on B-G431B-ESC1
+    raw_adc = adcBuffer1[3];
 
   return raw_adc * _ADC_CONV;
 }

@@ -170,3 +170,24 @@ int InlineCurrentSense::driverAlign(BLDCDriver *driver, float voltage){
     // 4 - success but pins reconfigured and gains inverted
     return exit_flag;
 }
+
+#if defined(STM32G4xx)
+float InlineCurrentSense::getTemperature() {
+    float temp_raw = _readADCVoltageInline(PB14);
+    // convert ADC sample into temperature (STM32G431-ESC1 specific)
+    constexpr float R60 = 4700.0f; // ohm
+    constexpr float eps = 0.1f; // epsilon (avoid divide by zero)
+    float const R_NTC = R60*(4096.0f/(temp_raw+eps)-1.0f); // 10kohm NTC at 25°C
+    constexpr float Beta = 3455.0f; // for a 10k NTC
+    constexpr float Kelvin = 273.15f; //°C
+    constexpr float T0 = 273.15f + 25.0f;
+    constexpr float R0 = 10000.0f; // 10kohm at 25° for 10k NTC
+    float const present_temperature_K = Beta * T0 / ( Beta - T0*logf(R0/R_NTC) );
+    return present_temperature_K-Kelvin;
+}
+
+float InlineCurrentSense::getBusVoltage() {
+    float v_raw = _readADCVoltageInline(PA0);
+    return v_raw * 10.4;
+}
+#endif
