@@ -28,6 +28,8 @@ class InlineCurrentSense: public CurrentSense{
     int driverSync(BLDCDriver *driver) override;
     int driverAlign(BLDCDriver *driver, float voltage) override;
 
+    float readADCPin(const int pin);
+
     // ADC measuremnet gain for each phase
     // support for different gains for different phases of more commonly - inverted phase currents
     // this should be automated later
@@ -39,6 +41,11 @@ class InlineCurrentSense: public CurrentSense{
     // LowPassFilter lpf_a{DEF_LPF_PER_PHASE_CURRENT_SENSE_Tf}; //!<  current A low pass filter
     // LowPassFilter lpf_b{DEF_LPF_PER_PHASE_CURRENT_SENSE_Tf}; //!<  current B low pass filter
     // LowPassFilter lpf_c{DEF_LPF_PER_PHASE_CURRENT_SENSE_Tf}; //!<  current C low pass filter
+
+    #if defined(STM32G4xx)
+    float getTemperature();
+    float getBusVoltage();
+    #endif
 
   private:
   

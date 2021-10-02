@@ -36,6 +36,20 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   __HAL_RCC_ADC12_CLK_ENABLE();
+
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  // set pin mode for PB14 (temperature sense)
+  GPIO_InitStruct.Pin = GPIO_PIN_14;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  // set pin mode for PA0 (VBUS sense)
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
 /** 
@@ -92,7 +106,7 @@ void  MX_ADC1_Init(ADC_HandleTypeDef* hadc1)
   hadc1->Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1->Init.LowPowerAutoWait = DISABLE;
   hadc1->Init.ContinuousConvMode = DISABLE;
-  hadc1->Init.NbrOfConversion = 2;
+  hadc1->Init.NbrOfConversion = 4;
   hadc1->Init.DiscontinuousConvMode = DISABLE;
   hadc1->Init.ExternalTrigConv = ADC_EXTERNALTRIG_T1_TRGO;
   hadc1->Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
@@ -131,10 +145,22 @@ void  MX_ADC1_Init(ADC_HandleTypeDef* hadc1)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN ADC1_Init 2 */
+  
+  // configure external temperature sensor
+  sConfig.Channel = ADC_CHANNEL_5;  // ADC1_IN5 = PB14
+  sConfig.Rank = ADC_REGULAR_RANK_3;
+  if (HAL_ADC_ConfigChannel(hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
-  /* USER CODE END ADC1_Init 2 */
-
+  // configure VBUS sense
+  sConfig.Channel = ADC_CHANNEL_1;  // PA0
+  sConfig.Rank = ADC_REGULAR_RANK_4;
+  if (HAL_ADC_ConfigChannel(hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /**
