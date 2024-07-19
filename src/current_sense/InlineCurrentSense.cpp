@@ -252,7 +252,7 @@ int InlineCurrentSense::driverAlign(float voltage){
     return exit_flag;
 }
 
-#if defined(STM32G4xx)
+#if defined(ARDUINO_B_G431B_ESC1)
 float InlineCurrentSense::getTemperature() {
     float temp_raw = _readADCVoltageInline(PB14);
     // convert ADC sample into temperature (STM32G431-ESC1 specific)

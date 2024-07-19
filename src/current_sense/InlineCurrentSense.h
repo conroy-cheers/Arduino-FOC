@@ -49,11 +49,10 @@ class InlineCurrentSense: public CurrentSense{
     // LowPassFilter lpf_b{DEF_LPF_PER_PHASE_CURRENT_SENSE_Tf}; //!<  current B low pass filter
     // LowPassFilter lpf_c{DEF_LPF_PER_PHASE_CURRENT_SENSE_Tf}; //!<  current C low pass filter
 
-    #if defined(STM32G4xx)
+    #if defined(ARDUINO_B_G431B_ESC1)
     float getTemperature();
     float getBusVoltage();
     #endif
-
 
     float offset_ia; //!< zero current A voltage value (center of the adc reading)
     float offset_ib; //!< zero current B voltage value (center of the adc reading)
