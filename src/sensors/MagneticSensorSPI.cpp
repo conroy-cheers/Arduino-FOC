@@ -1,4 +1,3 @@
-#ifndef TARGET_RP2040
 
 #include "MagneticSensorSPI.h"
 
@@ -32,13 +31,13 @@ MagneticSensorSPIConfig_s MA730_SPI = {
 //  cs              - SPI chip select pin
 //  _bit_resolution   sensor resolution bit number
 // _angle_register  - (optional) angle read register - default 0x3FFF
-MagneticSensorSPI::MagneticSensorSPI(int cs, float _bit_resolution, int _angle_register){
+MagneticSensorSPI::MagneticSensorSPI(int cs, int _bit_resolution, int _angle_register){
 
   chip_select_pin = cs;
   // angle read register of the magnetic sensor
   angle_register = _angle_register ? _angle_register : DEF_ANGLE_REGISTER;
   // register maximum value (counts per revolution)
-  cpr = pow(2,_bit_resolution);
+  cpr = _powtwo(_bit_resolution);
   spi_mode = SPI_MODE1;
   clock_speed = 1000000;
   bit_resolution = _bit_resolution;
@@ -53,7 +52,7 @@ MagneticSensorSPI::MagneticSensorSPI(MagneticSensorSPIConfig_s config, int cs){
   // angle read register of the magnetic sensor
   angle_register = config.angle_register ? config.angle_register : DEF_ANGLE_REGISTER;
   // register maximum value (counts per revolution)
-  cpr = pow(2, config.bit_resolution);
+  cpr = _powtwo(config.bit_resolution);
   spi_mode = config.spi_mode;
   clock_speed = config.clock_speed;
   bit_resolution = config.bit_resolution;
@@ -74,6 +73,8 @@ void MagneticSensorSPI::init(SPIClass* _spi){
 	// do any architectures need to set the clock divider for SPI? Why was this in the code?
   //spi->setClockDivider(SPI_CLOCK_DIV8);
 	digitalWrite(chip_select_pin, HIGH);
+
+  this->Sensor::init(); // call base class init
 }
 
 //  Shaft angle calculation
@@ -158,4 +159,3 @@ void MagneticSensorSPI::close(){
 }
 
 
-#endif

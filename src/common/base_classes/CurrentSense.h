@@ -13,19 +13,25 @@ class CurrentSense{
 
     /**
      *  Function intialising the CurrentSense class
-     *   All the necessary intialisations of adc and sync should be implemented here
-     */
-    virtual void init() = 0;
-    
-    /**
-     * Function intended to implement all that is needed to sync and current sensing with the driver.
-     * If no such thing is needed it can be left empty (return 1)
+     *   - All the necessary intialisations of adc and sync should be implemented here
+     *   
      * @returns -  0 - for failure &  1 - for success 
      */
-    virtual int driverSync(BLDCDriver *driver) = 0;
+    virtual int init() = 0;
+    
+    /**
+     * Linking the current sense with the motor driver
+     * Only necessary if synchronisation in between the two is required
+     */
+    void linkDriver(BLDCDriver *driver);
 
-    // calibration variables
+    // variables
     bool skip_align = false; //!< variable signaling that the phase current direction should be verified during initFOC()
+    
+    BLDCDriver* driver = nullptr; //!< driver link
+    bool initialized = false; // true if current sense was successfully initialized   
+    void* params = 0; //!< pointer to hardware specific parameters of current sensing
+    
     /**
      * Function intended to verify if:
      *   - phase current are oriented properly 
@@ -34,7 +40,7 @@ class CurrentSense{
      * This function corrects the alignment errors if possible ans if no such thing is needed it can be left empty (return 1)
      * @returns -  0 - for failure &  positive number (with status) - for success 
      */
-    virtual int driverAlign(BLDCDriver *driver, float voltage) = 0;
+    virtual int driverAlign(float align_voltage) = 0;
 
     /**
      *  Function rading the phase currents a, b and c
@@ -47,7 +53,7 @@ class CurrentSense{
     virtual PhaseCurrent_s getPhaseCurrents() = 0;
     /**
      * Function reading the magnitude of the current set to the motor
-     *  It returns the abosolute or signed magnitude if possible
+     *  It returns the absolute or signed magnitude if possible
      *  It can receive the motor electrical angle to help with calculation
      *  This function is used with the current control  (not foc)
      *  
@@ -56,12 +62,42 @@ class CurrentSense{
     virtual float getDCCurrent(float angle_el = 0);
 
     /**
-     * Function used for FOC contorl, it reads the DQ currents of the motor 
+     * Function used for FOC control, it reads the DQ currents of the motor 
      *   It uses the function getPhaseCurrents internally
      * 
      * @param angle_el - motor electrical angle
      */
     DQCurrent_s getFOCCurrents(float angle_el);
+
+    /**
+     * Function used for Clarke transform in FOC control
+     *   It reads the phase currents of the motor 
+     *   It returns the alpha and beta currents
+     * 
+     * @param current - phase current
+     */
+    ABCurrent_s getABCurrents(PhaseCurrent_s current);
+
+    /**
+     * Function used for Park transform in FOC control
+     *   It reads the Alpha Beta currents and electircal angle of the motor 
+     *   It returns the D and Q currents
+     * 
+     * @param current - phase current
+     */
+    DQCurrent_s getDQCurrents(ABCurrent_s current,float angle_el);
+
+    /**
+     * enable the current sense. default implementation does nothing, but you can
+     * override it to do something useful.
+     */
+    virtual void enable();
+
+    /**
+     * disable the current sense. default implementation does nothing, but you can
+     * override it to do something useful.
+     */
+    virtual void disable();
 };
 
 #endif

@@ -10,9 +10,9 @@
 /**
  *  Quadrature mode configuration structure
  */
-enum Quadrature{
-  ON, //!<  Enable quadrature mode CPR = 4xPPR
-  OFF //!<  Disable quadrature mode / CPR = PPR
+enum Quadrature : uint8_t {
+  ON    = 0x00, //!<  Enable quadrature mode CPR = 4xPPR
+  OFF   = 0x01  //!<  Disable quadrature mode / CPR = PPR
 };
 
 class Encoder: public Sensor{
@@ -61,12 +61,8 @@ class Encoder: public Sensor{
     // Abstract functions of the Sensor class implementation
     /** get current angle (rad) */
     float getSensorAngle() override;
-    float getMechanicalAngle() override;
     /**  get current angular velocity (rad/s) */
     float getVelocity() override;
-    float getAngle() override;
-    double getPreciseAngle() override;
-    int32_t getFullRotations() override;
     virtual void update() override;
 
     /**

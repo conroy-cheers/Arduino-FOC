@@ -56,19 +56,20 @@ int BLDCDriver3PWM::init() {
 
   // Set the pwm frequency to the pins
   // hardware specific function - depending on driver and mcu
-  _configure3PWM(pwm_frequency, pwmA, pwmB, pwmC);
-  return 0;
+  params = _configure3PWM(pwm_frequency, pwmA, pwmB, pwmC);
+  initialized = (params!=SIMPLEFOC_DRIVER_INIT_FAILED);
+  return params!=SIMPLEFOC_DRIVER_INIT_FAILED;
 }
 
 
 
 // Set voltage to the pwm pin
-void BLDCDriver3PWM::setPhaseState(int sa, int sb, int sc) {
+void BLDCDriver3PWM::setPhaseState(PhaseState sa, PhaseState sb, PhaseState sc) {
   // disable if needed
   if( _isset(enableA_pin) &&  _isset(enableB_pin)  && _isset(enableC_pin) ){
-    digitalWrite(enableA_pin, sa == _HIGH_IMPEDANCE ? LOW : HIGH);
-    digitalWrite(enableB_pin, sb == _HIGH_IMPEDANCE ? LOW : HIGH);
-    digitalWrite(enableC_pin, sc == _HIGH_IMPEDANCE ? LOW : HIGH);
+    digitalWrite(enableA_pin, sa == PhaseState::PHASE_ON ? enable_active_high:!enable_active_high);
+    digitalWrite(enableB_pin, sb == PhaseState::PHASE_ON ? enable_active_high:!enable_active_high);
+    digitalWrite(enableC_pin, sc == PhaseState::PHASE_ON ? enable_active_high:!enable_active_high);
   }
 }
 
@@ -87,5 +88,5 @@ void BLDCDriver3PWM::setPwm(float Ua, float Ub, float Uc) {
 
   // hardware specific writing
   // hardware specific function - depending on driver and mcu
-  _writeDutyCycle3PWM(dc_a, dc_b, dc_c, pwmA, pwmB, pwmC);
+  _writeDutyCycle3PWM(dc_a, dc_b, dc_c, params);
 }

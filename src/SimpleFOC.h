@@ -45,7 +45,7 @@
 //  BLDCMotor( pole_pairs )
 BLDCMotor motor = BLDCMotor(11);
 //  BLDCDriver( pin_pwmA, pin_pwmB, pin_pwmC, enable (optional) )
-BLDCDriver3PWM motor = BLDCDriver3PWM(9, 10, 11, 8);
+BLDCDriver3PWM driver = BLDCDriver3PWM(9, 10, 11, 8);
 //  Encoder(pin_A, pin_B, CPR)
 Encoder encoder = Encoder(2, 3, 2048);
 // channel A and B callbacks
@@ -105,13 +105,16 @@ void loop() {
 #include "sensors/MagneticSensorAnalog.h"
 #include "sensors/MagneticSensorPWM.h"
 #include "sensors/HallSensor.h"
+#include "sensors/GenericSensor.h"
 #include "drivers/BLDCDriver3PWM.h"
 #include "drivers/BLDCDriver6PWM.h"
 #include "drivers/StepperDriver4PWM.h"
 #include "drivers/StepperDriver2PWM.h"
 #include "current_sense/InlineCurrentSense.h"
 #include "current_sense/LowsideCurrentSense.h"
+#include "current_sense/GenericCurrentSense.h"
 #include "communication/Commander.h"
 #include "communication/StepDirListener.h"
+#include "communication/SimpleFOCDebug.h"
 
 #endif

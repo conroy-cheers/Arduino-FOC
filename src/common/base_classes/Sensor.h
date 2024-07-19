@@ -6,19 +6,19 @@
 /**
  *  Direction structure
  */
-enum Direction{
-    CW      = 1,  //clockwise
+enum Direction : int8_t {
+    CW      = 1,  // clockwise
     CCW     = -1, // counter clockwise
-    UNKNOWN = 0   //not yet known or invalid state
+    UNKNOWN = 0   // not yet known or invalid state
 };
 
 
 /**
  *  Pullup configuration structure
  */
-enum Pullup{
-    USE_INTERN, //!< Use internal pullups
-    USE_EXTERN //!< Use external pullups
+enum Pullup : uint8_t {
+    USE_INTERN = 0x00, //!< Use internal pullups
+    USE_EXTERN = 0x01  //!< Use external pullups
 };
 
 /**
@@ -28,8 +28,8 @@ enum Pullup{
  * Encoders, Magnetic Encoders and Hall Sensor implementations. This base class extracts the
  * most basic common features so that a FOC driver can obtain the data it needs for operation.
  * 
- * To implement your own sensors, create a sub-class of this class, and implement the getAngle()
- * method. getAngle() returns a float value, in radians, representing the current shaft angle in the
+ * To implement your own sensors, create a sub-class of this class, and implement the getSensorAngle()
+ * method. getSensorAngle() returns a float value, in radians, representing the current shaft angle in the
  * range 0 to 2*PI (one full turn). 
  * 
  * To function correctly, the sensor class update() method has to be called sufficiently quickly. Normally,
@@ -42,6 +42,7 @@ enum Pullup{
  * 
  */
 class Sensor{
+	friend class SmoothingSensor;
     public:
         /**
          * Get mechanical shaft angle in the range 0 to 2PI. This value will be as precise as possible with
@@ -101,6 +102,12 @@ class Sensor{
          * 1 - ecoder with index (with index not found yet)
          */
         virtual int needsSearch();
+
+        /**
+         * Minimum time between updates to velocity. If time elapsed is lower than this, the velocity is not updated.
+         */
+        float min_elapsed_time = 0.000100; // default is 100 microseconds, or 10kHz
+
     protected:
         /** 
          * Get current shaft angle from the sensor hardware, and 
@@ -120,9 +127,10 @@ class Sensor{
         virtual void init();
 
         // velocity calculation variables
-        float angle_prev=0; // result of last call to getSensorAngle(), used for full rotations and velocity
+        float velocity=0.0f;
+        float angle_prev=0.0f; // result of last call to getSensorAngle(), used for full rotations and velocity
         long angle_prev_ts=0; // timestamp of last call to getAngle, used for velocity
-        float vel_angle_prev=0; // angle at last call to getVelocity, used for velocity
+        float vel_angle_prev=0.0f; // angle at last call to getVelocity, used for velocity
         long vel_angle_prev_ts=0; // last velocity calculation timestamp
         int32_t full_rotations=0; // full rotation tracking
         int32_t vel_full_rotations=0; // previous full rotation value for velocity calculation

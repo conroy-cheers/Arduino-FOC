@@ -24,32 +24,47 @@
 /**
  *  Motiron control type
  */
-enum MotionControlType{
-  torque,//!< Torque control
-  velocity,//!< Velocity motion control
-  angle,//!< Position/angle motion control
-  velocity_openloop,
-  angle_openloop
+enum MotionControlType : uint8_t {
+  torque            = 0x00,     //!< Torque control
+  velocity          = 0x01,     //!< Velocity motion control
+  angle             = 0x02,     //!< Position/angle motion control
+  velocity_openloop = 0x03,
+  angle_openloop    = 0x04
 };
 
 /**
  *  Motiron control type
  */
-enum TorqueControlType{
-  voltage, //!< Torque control using voltage
-  dc_current, //!< Torque control using DC current (one current magnitude)
-  foc_current //!< torque control using dq currents
+enum TorqueControlType : uint8_t { 
+  voltage            = 0x00,     //!< Torque control using voltage
+  dc_current         = 0x01,     //!< Torque control using DC current (one current magnitude)
+  foc_current        = 0x02,     //!< torque control using dq currents
 };
 
 /**
  *  FOC modulation type
  */
-enum FOCModulationType{
-  SinePWM, //!< Sinusoidal PWM modulation
-  SpaceVectorPWM, //!< Space vector modulation method
-  Trapezoid_120,
-  Trapezoid_150
+enum FOCModulationType : uint8_t {
+  SinePWM            = 0x00,     //!< Sinusoidal PWM modulation
+  SpaceVectorPWM     = 0x01,     //!< Space vector modulation method
+  Trapezoid_120      = 0x02,     
+  Trapezoid_150      = 0x03,     
 };
+
+
+
+enum FOCMotorStatus : uint8_t {
+  motor_uninitialized = 0x00,     //!< Motor is not yet initialized
+  motor_initializing  = 0x01,     //!< Motor intiialization is in progress
+  motor_uncalibrated  = 0x02,     //!< Motor is initialized, but not calibrated (open loop possible)
+  motor_calibrating   = 0x03,     //!< Motor calibration in progress
+  motor_ready         = 0x04,     //!< Motor is initialized and calibrated (closed loop possible)
+  motor_error         = 0x08,     //!< Motor is in error state (recoverable, e.g. overcurrent protection active)
+  motor_calib_failed  = 0x0E,     //!< Motor calibration failed (possibly recoverable)
+  motor_init_failed   = 0x0F,     //!< Motor initialization failed (not recoverable)
+};
+
+
 
 /**
  Generic motor class
@@ -89,12 +104,8 @@ class FOCMotor
      * and aligning sensor's and motors' zero position 
      * 
      * - If zero_electric_offset parameter is set the alignment procedure is skipped
-     * 
-     * @param zero_electric_offset value of the sensors absolute position electrical offset in respect to motor's electrical 0 position.
-     * @param sensor_direction  sensor natural direction - default is CW
-     *
      */  
-    virtual int initFOC( float zero_electric_offset = NOT_SET , Direction sensor_direction = Direction::CW)=0; 
+    virtual int initFOC()=0;
     /**
      * Function running FOC algorithm in real-time
      * it calculates the gets motor angle and sets the appropriate voltages 
@@ -112,6 +123,16 @@ class FOCMotor
      */
     virtual void move(float target = NOT_SET)=0;
 
+    /**
+    * Method using FOC to set Uq to the motor at the optimal angle
+    * Heart of the FOC algorithm
+    * 
+    * @param Uq Current voltage in q axis to set to the motor
+    * @param Ud Current voltage in d axis to set to the motor
+    * @param angle_el current electrical angle of the motor
+    */
+    virtual void setPhaseVoltage(float Uq, float Ud, float angle_el)=0;
+    
     // State calculation methods 
     /** Shaft angle calculation in radians [rad] */
     float shaftAngle();
@@ -122,6 +143,7 @@ class FOCMotor
     float shaftVelocity();
 
 
+
     /** 
      * Electrical angle calculation  
      */
@@ -129,6 +151,7 @@ class FOCMotor
 
     // state variables
     float target; //!< current target value - depends of the controller
+    float feed_forward_velocity = 0.0f; //!< current feed forward velocity
   	float shaft_angle;//!< current motor angle
   	float electrical_angle;//!< current electrical angle
   	float shaft_velocity;//!< current motor velocity 
@@ -137,6 +160,9 @@ class FOCMotor
     float shaft_angle_sp;//!< current target angle
     DQVoltage_s voltage;//!< current d and q voltage set to the motor
     DQCurrent_s current;//!< current d and q current measured
+    float voltage_bemf; //!< estimated backemf voltage (if provided KV constant)
+    float	Ualpha, Ubeta; //!< Phase voltages U alpha and U beta used for inverse Park and Clarke transform
+
 
     // motor configuration parameters
     float voltage_sensor_align;//!< sensor and motor align voltage parameter
@@ -145,17 +171,20 @@ class FOCMotor
     // motor physical parameters
     float	phase_resistance; //!< motor phase resistance
     int pole_pairs;//!< motor pole pairs number
+    float KV_rating; //!< motor KV rating
+    float	phase_inductance; //!< motor phase inductance
 
     // limiting variables
-    float voltage_limit; //!< Voltage limitting variable - global limit
-    float current_limit; //!< Current limitting variable - global limit
-    float velocity_limit; //!< Velocity limitting variable - global limit
+    float voltage_limit; //!< Voltage limiting variable - global limit
+    float current_limit; //!< Current limiting variable - global limit
+    float velocity_limit; //!< Velocity limiting variable - global limit
 
     // motor status vairables
     int8_t enabled = 0;//!< enabled or disabled motor flag
+    FOCMotorStatus motor_status = FOCMotorStatus::motor_uninitialized; //!< motor status
     
     // pwm modulation related variables
-    FOCModulationType foc_modulation;//!<  parameter derterniming modulation algorithm
+    FOCModulationType foc_modulation;//!<  parameter determining modulation algorithm
     int8_t modulation_centered = 1;//!< flag (1) centered modulation around driver limit /2  or  (0) pulled to 0
 
 
@@ -178,7 +207,8 @@ class FOCMotor
     // sensor related variabels
     float sensor_offset; //!< user defined sensor zero offset
     float zero_electric_angle = NOT_SET;//!< absolute zero electric angle - if available
-    int sensor_direction = NOT_SET; //!< if sensor_direction == Direction::CCW then direction will be flipped to CW
+    Direction sensor_direction = Direction::UNKNOWN; //!< default is CW. if sensor_direction == Direction::CCW then direction will be flipped compared to CW. Set to UNKNOWN to set by calibration
+    bool pp_check_result = false; //!< the result of the PP check, if run during loopFOC
 
     /**
      * Function providing BLDCMotor class with the 
@@ -194,6 +224,10 @@ class FOCMotor
      */
     void monitor();
     unsigned int monitor_downsample = DEF_MON_DOWNSMAPLE; //!< show monitor outputs each monitor_downsample calls 
+    char monitor_start_char = '\0'; //!< monitor starting character 
+    char monitor_end_char = '\0'; //!< monitor outputs ending character 
+    char monitor_separator = '\t'; //!< monitor outputs separation character
+    unsigned int  monitor_decimals = 4; //!< monitor outputs decimal places
     // initial monitoring will display target, voltage, velocity and angle
     uint8_t monitor_variables = _MON_TARGET | _MON_VOLT_Q | _MON_VEL | _MON_ANGLE; //!< Bit array holding the map of variables the user wants to monitor
    

@@ -53,17 +53,16 @@ class HallSensor: public Sensor{
     int cpr;//!< HallSensor cpr number
 
     // Abstract functions of the Sensor class implementation
+    /** Interrupt-safe update */
+    void update() override;
     /** get current angle (rad) */
     float getSensorAngle() override;
-    float getMechanicalAngle() override;
-    float getAngle() override;
     /**  get current angular velocity (rad/s) */
     float getVelocity() override;
-    double getPreciseAngle() override;
-    int32_t getFullRotations() override;
 
     // whether last step was CW (+1) or CCW (-1).  
     Direction direction;
+    Direction old_direction;
 
     void attachSectorCallback(void (*onSectorChange)(int a) = nullptr);
 
@@ -75,6 +74,9 @@ class HallSensor: public Sensor{
     volatile long electric_rotations;
     // this is sometimes useful to identify interrupt issues (e.g. weak or no pullup resulting in 1000s of interrupts)
     volatile long total_interrupts; 
+
+    // variable used to filter outliers - rad/s
+    float velocity_max = 1000.0f;
 
   private:
     

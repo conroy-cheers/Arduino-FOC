@@ -28,7 +28,7 @@
 #define DEF_CURR_FILTER_Tf 0.005f //!< default currnet filter time constant
 #endif
 // default current limit values
-#define DEF_CURRENT_LIM 0.2f //!< 2Amps current limit by default
+#define DEF_CURRENT_LIM 2.0f //!< 2Amps current limit by default
 
 // default monitor downsample
 #define DEF_MON_DOWNSMAPLE 100 //!< default monitor downsample
@@ -43,7 +43,7 @@
 // align voltage
 #define DEF_VOLTAGE_SENSOR_ALIGN 3.0f //!< default voltage for sensor and motor zero alignemt
 // low pass filter velocity
-#define DEF_VEL_FILTER_Tf 0.005 //!< default velocity filter time constant
+#define DEF_VEL_FILTER_Tf 0.005f //!< default velocity filter time constant
 
 // current sense default parameters
 #define DEF_LPF_PER_PHASE_CURRENT_SENSE_Tf 0.0f  //!< default currnet sense per phase low pass filter time constant 

@@ -1,7 +1,6 @@
 #ifndef MAGNETICSENSORSPI_LIB_H
 #define MAGNETICSENSORSPI_LIB_H
 
-#ifndef TARGET_RP2040
 
 #include "Arduino.h"
 #include <SPI.h>
@@ -31,7 +30,7 @@ class MagneticSensorSPI: public Sensor{
      * @param bit_resolution   sensor resolution bit number
      * @param angle_register  (optional) angle read register - default 0x3FFF
      */
-    MagneticSensorSPI(int cs, float bit_resolution, int angle_register = 0);
+    MagneticSensorSPI(int cs, int bit_resolution, int angle_register = 0);
     /**
      *  MagneticSensorSPI class constructor
      * @param config   SPI config
@@ -82,5 +81,4 @@ class MagneticSensorSPI: public Sensor{
 };
 
 
-#endif
 #endif

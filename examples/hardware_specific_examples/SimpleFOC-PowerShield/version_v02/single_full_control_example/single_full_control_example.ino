@@ -12,7 +12,7 @@ void doA(){encoder.handleA();}
 void doB(){encoder.handleB();}
 
 // inline current sensor instance
-InlineCurrentSense current_sense = InlineCurrentSense(0.001, 50.0, A0, A1);
+InlineCurrentSense current_sense = InlineCurrentSense(0.001f, 50.0f, A0, A1);
 
 // commander communication instance
 Commander command = Commander(Serial);
@@ -33,6 +33,8 @@ void setup() {
   driver.init();
   // link driver
   motor.linkDriver(&driver);
+  // link current sense and the driver
+  current_sense.linkDriver(&driver);
 
   motor.voltage_sensor_align = 1;
   // set control loop type to be used

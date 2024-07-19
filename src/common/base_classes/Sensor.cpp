@@ -2,10 +2,12 @@
 #include "../foc_utils.h"
 #include "../time_utils.h"
 
-// TODO add an init method to make the startup smoother by initializing internal variables to current values rather than 0
+
 
 void Sensor::update() {
     float val = getSensorAngle();
+    if (val<0) // sensor angles are strictly non-negative. Negative values are used to signal errors.
+        return; // TODO signal error, e.g. via a flag and counter
     angle_prev_ts = _micros();
     float d_angle = val - angle_prev;
     // if overflow happened track it as full rotation
@@ -17,17 +19,23 @@ void Sensor::update() {
  /** get current angular velocity (rad/s) */
 float Sensor::getVelocity() {
     // calculate sample time
-    float Ts = (angle_prev_ts - vel_angle_prev_ts)*1e-6;
-    // quick fix for strange cases (micros overflow)
-    if(Ts <= 0 || Ts > 0.5f) Ts = 1e-3f;
-    // velocity calculation
-    float vel = ( (float)(full_rotations - vel_full_rotations)*_2PI + (angle_prev - vel_angle_prev) ) / Ts;    
-    // save variables for future pass
+    float Ts = (angle_prev_ts - vel_angle_prev_ts)*1e-6f;
+    if (Ts < 0.0f) {    // handle micros() overflow - we need to reset vel_angle_prev_ts
+        vel_angle_prev = angle_prev;
+        vel_full_rotations = full_rotations;
+        vel_angle_prev_ts = angle_prev_ts;
+        return velocity;
+    }
+    if (Ts < min_elapsed_time) return velocity; // don't update velocity if deltaT is too small
+
+    velocity = ( (float)(full_rotations - vel_full_rotations)*_2PI + (angle_prev - vel_angle_prev) ) / Ts;
     vel_angle_prev = angle_prev;
     vel_full_rotations = full_rotations;
     vel_angle_prev_ts = angle_prev_ts;
-    return vel;
+    return velocity;
 }
+
+
 
 void Sensor::init() {
     // initialize all the internal variables of Sensor to ensure a "smooth" startup (without a 'jump' from zero)
